@@ -6,3 +6,21 @@
 //
 
 import Foundation
+import RxSwift
+
+protocol SearchBookUseCaseProtocol {
+    func execute(query: String) -> Observable<[Book]>
+}
+
+struct SearchBookUseCase: SearchBookUseCaseProtocol {
+    private let reporitory: BookRepositoryProtocol
+    
+    init(reporitory: BookRepositoryProtocol) {
+        self.reporitory = reporitory
+    }
+    
+    func execute(query: String) -> Observable<[Book]> {
+        return reporitory.searchBooks(query: query)
+    }
+}
+

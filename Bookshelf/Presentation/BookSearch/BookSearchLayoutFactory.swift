@@ -1,0 +1,118 @@
+//
+//  BookSearchLayoutFactory.swift
+//  Bookshelf
+//
+//  Created by 홍석현 on 10/27/25.
+//
+
+import UIKit
+
+enum BookSearchLayoutFactory {
+
+    enum Section: Int, CaseIterable {
+        case recent
+        case search
+
+        var title: String {
+            switch self {
+            case .recent: return "최근 본 책"
+            case .search: return "검색 결과"
+            }
+        }
+    }
+
+    // MARK: - Layout 생성
+    static func createLayout() -> UICollectionViewLayout {
+        return UICollectionViewCompositionalLayout { sectionIndex, environment in
+            guard let section = Section(rawValue: sectionIndex) else { return nil }
+
+            switch section {
+            case .recent:
+                return createRecentSection()
+            case .search:
+                return createSearchSection(environment: environment)
+            }
+        }
+    }
+
+    // MARK: - 최근 본 책 Section (가로 스크롤)
+    private static func createRecentSection() -> NSCollectionLayoutSection {
+        // Item
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .absolute(80),
+            heightDimension: .absolute(80)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        // Group
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .absolute(80),
+            heightDimension: .absolute(80)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+
+        // Section
+        let section = NSCollectionLayoutSection(group: group)
+        section.orthogonalScrollingBehavior = .continuous
+        section.interGroupSpacing = 12
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 20, trailing: 16)
+
+        // Header
+        section.boundarySupplementaryItems = [createSectionHeader()]
+
+        return section
+    }
+
+    // MARK: - 검색 결과 Section (그리드)
+    private static func createSearchSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
+        // 화면 너비에 따라 열 개수 결정
+        let columnCount: Int
+        if environment.container.effectiveContentSize.width > 800 {
+            columnCount = 4  // 가로 모드
+        } else {
+            columnCount = 2  // 세로 모드
+        }
+
+        // Item
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(0.5),
+            heightDimension: .estimated(200)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4)
+
+        // Group
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(200)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            repeatingSubitem: item,
+            count: columnCount
+        )
+
+        // Section
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 8
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 20, trailing: 8)
+
+        // Header
+        section.boundarySupplementaryItems = [createSectionHeader()]
+
+        return section
+    }
+
+    // MARK: - Section Header
+    private static func createSectionHeader() -> NSCollectionLayoutBoundarySupplementaryItem {
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(44)
+        )
+        return NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+    }
+}

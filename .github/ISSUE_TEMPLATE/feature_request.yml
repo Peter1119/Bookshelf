@@ -1,0 +1,59 @@
+name: 기능 요청
+description: 새로운 기능이나 개선사항을 제안합니다
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        새로운 기능이나 개선사항을 제안해주세요.
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: 기능 설명
+      description: 어떤 기능을 추가하고 싶으신가요?
+      placeholder: 예) 책 검색 결과를 필터링하는 기능이 필요합니다
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 필요한 이유
+      description: 왜 이 기능이 필요한가요?
+      placeholder: 예) 많은 검색 결과에서 원하는 책을 빠르게 찾기 위해
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: 제안하는 해결 방법
+      description: 어떻게 구현하면 좋을까요?
+      placeholder: |
+        예)
+        - 장르별 필터
+        - 출판년도 범위 필터
+        - 정렬 옵션 (최신순, 제목순 등)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      description: 이 기능의 우선순위는?
+      options:
+        - 높음 (필수 기능)
+        - 중간 (있으면 좋음)
+        - 낮음 (나중에)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 추가 정보
+      description: 스크린샷, 참고 자료 등
+      placeholder: 스크린샷이나 참고할 만한 앱이 있다면 공유해주세요

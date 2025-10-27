@@ -1,0 +1,85 @@
+name: 버그 리포트
+description: 버그나 문제를 보고합니다
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        버그를 발견하셨나요? 자세히 알려주세요!
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: 버그 설명
+      description: 어떤 문제가 발생했나요?
+      placeholder: 예) 책 검색 버튼을 누르면 앱이 크래시됩니다
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 재현 방법
+      description: 어떻게 하면 이 버그가 다시 발생하나요?
+      placeholder: |
+        1. '책 검색' 화면으로 이동
+        2. 검색어 입력
+        3. 검색 버튼 클릭
+        4. 앱 크래시 발생
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 예상 동작
+      description: 어떻게 동작해야 하나요?
+      placeholder: 예) 검색 결과 목록이 표시되어야 합니다
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: 실제 동작
+      description: 실제로는 어떻게 동작하나요?
+      placeholder: 예) 앱이 강제 종료됩니다
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 심각도
+      description: 이 버그가 얼마나 심각한가요?
+      options:
+        - 치명적 (앱 사용 불가)
+        - 높음 (주요 기능 동작 안 함)
+        - 중간 (일부 기능 문제)
+        - 낮음 (사소한 문제)
+    validations:
+      required: true
+
+  - type: input
+    id: ios-version
+    attributes:
+      label: iOS 버전
+      placeholder: 예) iOS 17.0
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: 디바이스
+      placeholder: 예) iPhone 15 Pro
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 추가 정보
+      description: 스크린샷, 로그, 에러 메시지 등
+      placeholder: 스크린샷이나 에러 로그를 첨부해주세요

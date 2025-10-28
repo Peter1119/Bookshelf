@@ -22,7 +22,7 @@ final class SearchBookCardView: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .semibold)
-        label.numberOfLines = 2
+        label.numberOfLines = 1
         return label
     }()
     
@@ -35,6 +35,14 @@ final class SearchBookCardView: UICollectionViewCell {
     }()
     
     private let stackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 4
+        stack.alignment = .fill  // 가로 가득 채우기
+        return stack
+    }()
+    
+    private let textStack: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 4
@@ -57,8 +65,9 @@ final class SearchBookCardView: UICollectionViewCell {
         contentView.addSubview(stackView)
 
         stackView.addArrangedSubview(thumbnailImageView)
-        stackView.addArrangedSubview(titleLabel)
-        stackView.addArrangedSubview(authorLabel)
+        stackView.addArrangedSubview(textStack)
+        textStack.addArrangedSubview(titleLabel)
+        textStack.addArrangedSubview(authorLabel)
 
         // 이미지 비율 고정 (3:4)
         thumbnailImageView.snp.makeConstraints { make in
@@ -66,12 +75,17 @@ final class SearchBookCardView: UICollectionViewCell {
         }
 
         stackView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(8)
+            make.edges.equalToSuperview()
         }
-
+        
+        titleLabel.snp.makeConstraints { make in
+            make.horizontalEdges.equalToSuperview().inset(8)
+            make.top.equalToSuperview().inset(4)
+        }
+        
         // 셀 배경 설정
         contentView.backgroundColor = .systemBackground
-        contentView.layer.cornerRadius = 12
+        contentView.layer.cornerRadius = 16
     }
     
     // MARK: - Configuration

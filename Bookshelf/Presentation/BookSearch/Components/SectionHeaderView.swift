@@ -31,7 +31,7 @@ final class SectionHeaderView: UICollectionReusableView {
         addSubview(titleLabel)
         
         titleLabel.snp.makeConstraints { make in
-            make.horizontalEdges.equalToSuperview().inset(16)
+            make.horizontalEdges.equalToSuperview()
             make.centerY.equalToSuperview()
             make.verticalEdges.equalToSuperview()
         }

@@ -49,13 +49,21 @@ enum BookSearchLayoutFactory {
             widthDimension: .absolute(80),
             heightDimension: .absolute(80)
         )
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitems: [item]
+        )
 
         // Section
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
         section.interGroupSpacing = 12
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 20, trailing: 16)
+        section.contentInsets = NSDirectionalEdgeInsets(
+            top: 0,
+            leading: 16,
+            bottom: 0,
+            trailing: 16
+        )
 
         // Header
         section.boundarySupplementaryItems = [createSectionHeader()]
@@ -79,7 +87,6 @@ enum BookSearchLayoutFactory {
             heightDimension: .estimated(200)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4)
 
         // Group
         let groupSize = NSCollectionLayoutSize(
@@ -91,11 +98,12 @@ enum BookSearchLayoutFactory {
             repeatingSubitem: item,
             count: columnCount
         )
+        group.interItemSpacing = .fixed(16)
 
         // Section
         let section = NSCollectionLayoutSection(group: group)
-        section.interGroupSpacing = 8
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 8, bottom: 20, trailing: 8)
+        section.interGroupSpacing = 16
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
 
         // Header
         section.boundarySupplementaryItems = [createSectionHeader()]

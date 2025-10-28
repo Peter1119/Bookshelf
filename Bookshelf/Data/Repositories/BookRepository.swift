@@ -9,8 +9,16 @@ import Foundation
 import RxSwift
 
 public struct BookRepository: BookRepositoryProtocol {
+    private let dataSource: BookDataSourceProtocol
+    
+    init(dataSource: BookDataSourceProtocol) {
+        self.dataSource = dataSource
+    }
+    
     public func searchBooks(query: String) -> Observable<[Book]> {
-        return .just([])
+        return dataSource
+            .searchBooks(BookSearchRequestDTO(query: query, page: 1))
+            .map { $0.map { $0.toDomain() } }
     }
 
     public func fetchRecentBooks() -> Observable<[Book]> {

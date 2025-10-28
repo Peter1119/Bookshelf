@@ -19,7 +19,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         let viewController = BookSearchViewController()
         viewController.reactor = BookSearchViewReactor(
-            searchBookUseCase: SearchBookUseCase(reporitory: MockBookRepository()),
+            searchBookUseCase: SearchBookUseCase(
+                reporitory: BookRepository(
+                    dataSource: BookDataSource()
+                )
+            ),
             fetchRecentBooksUseCase: FetchRecentBooksUseCase(
                 repository: MockBookRepository()
             )

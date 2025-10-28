@@ -22,7 +22,7 @@ enum BookSearchLayoutFactory {
     }
 
     // MARK: - Layout 생성
-    static func createLayout() -> UICollectionViewLayout {
+    static func createLayout(shouldShowEmptyView: @escaping () -> Bool) -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { sectionIndex, environment in
             guard let section = Section(rawValue: sectionIndex) else { return nil }
 
@@ -30,6 +30,10 @@ enum BookSearchLayoutFactory {
             case .recent:
                 return createRecentSection()
             case .search:
+                // 검색 결과가 비어있으면 Empty 레이아웃 사용
+                if shouldShowEmptyView() {
+                    return createEmptySection()
+                }
                 return createSearchSection(environment: environment)
             }
         }
@@ -105,6 +109,34 @@ enum BookSearchLayoutFactory {
         section.interGroupSpacing = 16
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
 
+        // Header
+        section.boundarySupplementaryItems = [createSectionHeader()]
+
+        return section
+    }
+
+    // MARK: - Empty Section (전체 너비)
+    private static func createEmptySection() -> NSCollectionLayoutSection {
+        // Item
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(300)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        // Group
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(300)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitems: [item]
+        )
+
+        // Section
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
         // Header
         section.boundarySupplementaryItems = [createSectionHeader()]
 

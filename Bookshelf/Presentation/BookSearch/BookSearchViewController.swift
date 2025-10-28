@@ -21,7 +21,10 @@ final class BookSearchViewController: UIViewController, View {
     private lazy var collectionView: UICollectionView = {
         let view = UICollectionView(
             frame: .zero,
-            collectionViewLayout: BookSearchLayoutFactory.createLayout()
+            collectionViewLayout: BookSearchLayoutFactory.createLayout(shouldShowEmptyView: { [weak self] in
+                guard let self = self else { return false }
+                return self.searchResults.isEmpty
+            })
         )
         view.backgroundColor = .systemBackground
         return view
@@ -88,6 +91,7 @@ final class BookSearchViewController: UIViewController, View {
         // Cell 등록
         collectionView.register(RecentBookCardView.self)
         collectionView.register(SearchBookCardView.self)
+        collectionView.register(EmptyCaseView.self)
         
         // Header 등록
         collectionView.register(
@@ -122,6 +126,10 @@ extension BookSearchViewController: UICollectionViewDataSource {
         case .recent:
             return recentBooks.count
         case .search:
+            // Empty 상태에서도 1개의 cell 표시
+            if searchResults.isEmpty {
+                return 1
+            }
             return searchResults.count
         }
     }
@@ -142,6 +150,16 @@ extension BookSearchViewController: UICollectionViewDataSource {
             return cell
 
         case .search:
+            // 검색 결과가 없을 때 EmptyView 표시
+            if searchResults.isEmpty {
+                let cell: EmptyCaseView = collectionView.dequeueReusableCell(for: indexPath)
+                cell.configure(
+                    image: UIImage(systemName: "magnifyingglass"),
+                    message: "검색 결과가 없습니다"
+                )
+                return cell
+            }
+
             let cell: SearchBookCardView = collectionView.dequeueReusableCell(for: indexPath)
             let book = searchResults[indexPath.item]
             cell.configure(with: book)

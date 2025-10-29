@@ -18,6 +18,14 @@ struct BookSearchResponseDTO: Decodable {
     let documents: [BookResponseDTO]
 }
 
+extension BookSearchResponseDTO {
+    func toDomain() -> BookSearchResult {
+        return BookSearchResult(
+            books: documents.map { $0.toDomain() },
+            isEnd: meta.isEnd)
+    }
+}
+
 struct BookResponseDTO: Decodable {
     let title: String
     let contents: String

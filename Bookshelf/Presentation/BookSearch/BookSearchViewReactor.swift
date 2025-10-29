@@ -62,15 +62,17 @@ final class BookSearchViewReactor: Reactor {
             guard !query.isEmpty else {
                 return Observable.from([
                     Mutation.setSearchResults([]),
+                    Mutation.setCurrentPage(1),
+                    Mutation.setHasMore(true),
                     Mutation.setCurrentQuery(query)
                 ])
             }
             return searchBookUseCase.execute(query: query, page: 1)
-                .flatMap { books in
+                .flatMap { bookResult in
                     Observable.from([
-                        Mutation.appendSearchResults(books),
+                        Mutation.appendSearchResults(bookResult.books),
                         Mutation.setCurrentPage(1),
-                        Mutation.setHasMore(!books.isEmpty),
+                        Mutation.setHasMore(!bookResult.isEnd),
                         Mutation.setLoading(false)
                     ])
                 }
@@ -85,14 +87,19 @@ final class BookSearchViewReactor: Reactor {
                     ])
                 }
         case .loadMoreSearchResults:
-            guard !currentState.isLoading, currentState.hasMore else { return .empty() }
+            guard
+                !currentState.isLoading,
+                    currentState.hasMore,
+                !currentState.currentQuery.isEmpty else {
+                return .empty()
+            }
             let nextPage = currentState.currentPage + 1
             return searchBookUseCase.execute(query: currentState.currentQuery, page: nextPage)
-                .flatMap { books in
+                .flatMap { bookResult in
                     Observable.from([
-                        Mutation.appendSearchResults(books),
+                        Mutation.appendSearchResults(bookResult.books),
                         Mutation.setCurrentPage(nextPage),
-                        Mutation.setHasMore(!books.isEmpty),
+                        Mutation.setHasMore(!bookResult.isEnd),
                         Mutation.setLoading(false)
                     ])
                 }

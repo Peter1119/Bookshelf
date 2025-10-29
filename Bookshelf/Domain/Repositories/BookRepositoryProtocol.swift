@@ -9,7 +9,7 @@ import Foundation
 import RxSwift
 
 public protocol BookRepositoryProtocol {
-    func searchBooks(query: String, page: Int) -> Observable<[Book]>
+    func searchBooks(query: String, page: Int) -> Observable<BookSearchResult>
     func fetchRecentBooks() -> Observable<[Book]>
     func saveRecentBook(_ book: Book) -> Observable<Void>
 }

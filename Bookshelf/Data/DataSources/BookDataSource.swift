@@ -9,7 +9,7 @@ import Foundation
 import RxSwift
 
 protocol BookDataSourceProtocol {
-    func searchBooks(_ request: BookSearchRequestDTO) -> Observable<[BookResponseDTO]>
+    func searchBooks(_ request: BookSearchRequestDTO) -> Observable<BookSearchResponseDTO>
 }
 
 struct BookDataSource: BookDataSourceProtocol {
@@ -19,14 +19,14 @@ struct BookDataSource: BookDataSourceProtocol {
         self.provider = provider
     }
 
-    func searchBooks(_ request: BookSearchRequestDTO) -> Observable<[BookResponseDTO]> {
+    func searchBooks(_ request: BookSearchRequestDTO) -> Observable<BookSearchResponseDTO> {
         return Observable.create { observer in
             let task = Task {
                 do {
                     let response: BookSearchResponseDTO = try await self.provider.request(
                         BookTargetType.search(request)
                     )
-                    observer.onNext(response.documents)
+                    observer.onNext(response)
                     observer.onCompleted()
                 } catch {
                     observer.onError(error)

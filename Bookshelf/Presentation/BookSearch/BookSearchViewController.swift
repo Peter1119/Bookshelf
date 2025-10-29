@@ -10,8 +10,11 @@ import ReactorKit
 import RxCocoa
 import SnapKit
 
+@MainActor
 final class BookSearchViewController: UIViewController, View {
     var disposeBag: DisposeBag = DisposeBag()
+
+    private var dataSource: UICollectionViewDiffableDataSource<BookSearchSection, BookSearchItem>!
     private let searchBar: UISearchBar = {
         let result = UISearchBar()
         result.placeholder = "책 제목을 입력하세요"
@@ -27,6 +30,7 @@ final class BookSearchViewController: UIViewController, View {
             })
         )
         view.backgroundColor = .systemBackground
+        view.keyboardDismissMode = .onDrag
         return view
     }()
 
@@ -37,6 +41,44 @@ final class BookSearchViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupCollectionView()
+        configureDataSource()
+    }
+    
+    private func configureDataSource() {
+        dataSource = UICollectionViewDiffableDataSource(
+            collectionView: collectionView,
+            cellProvider: { collectionView, indexPath, item in
+                switch item {
+                case .recentBook(let book):
+                    let cell: RecentBookCardView = collectionView.dequeueReusableCell(for: indexPath)
+                    
+                    cell.configure(with: book.thumbnail)
+                    return cell
+                case .searchBook(let book):
+                    let cell: SearchBookCardView = collectionView.dequeueReusableCell(for: indexPath)
+                    cell.configure(with: book)
+                    return cell
+                case .empty:
+                    let cell: EmptyCaseView = collectionView.dequeueReusableCell(for: indexPath)
+                    cell.configure(
+                        image: UIImage(systemName: "magnifyingglass"),
+                        message: "검색 결과가 없습니다"
+                    )
+                    return cell
+                }
+            }
+        )
+        
+        dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
+            guard kind == UICollectionView.elementKindSectionHeader,
+                  let section = BookSearchSection(rawValue: indexPath.section) else {
+                return nil
+            }
+            
+            let header: SectionHeaderView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, for: indexPath)
+            header.configure(title: section.title)
+            return header
+        }
     }
 
     func bind(reactor: BookSearchViewReactor) {
@@ -59,7 +101,7 @@ final class BookSearchViewController: UIViewController, View {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.recentBooks = books
-                self?.collectionView.reloadData()
+                self?.updateSnapshot()
             })
             .disposed(by: disposeBag)
 
@@ -69,9 +111,28 @@ final class BookSearchViewController: UIViewController, View {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.searchResults = books
-                self?.collectionView.reloadData()
+                self?.updateSnapshot()
             })
             .disposed(by: disposeBag)
+    }
+    
+    private func updateSnapshot() {
+        Task {
+            var snapshot = NSDiffableDataSourceSnapshot<BookSearchSection, BookSearchItem>()
+            
+            snapshot.appendSections([.recent, .search])
+            
+            let recentItems = recentBooks.map { BookSearchItem.recentBook($0) }
+            snapshot.appendItems(recentItems, toSection: .recent)
+            
+            if searchResults.isEmpty {
+                snapshot.appendItems([.empty], toSection: .search)
+            } else {
+                let searchItems = searchResults.map { BookSearchItem.searchBook($0) }
+                snapshot.appendItems(searchItems, toSection: .search)
+            }
+            await dataSource.apply(snapshot, animatingDifferences: true)
+        }
     }
     
     private func setupUI() {
@@ -87,100 +148,24 @@ final class BookSearchViewController: UIViewController, View {
 
     private func setupCollectionView() {
         view.addSubview(collectionView)
-        
+
         // Cell 등록
         collectionView.register(RecentBookCardView.self)
         collectionView.register(SearchBookCardView.self)
         collectionView.register(EmptyCaseView.self)
-        
+
         // Header 등록
         collectionView.register(
             SectionHeaderView.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader
         )
 
-        collectionView.dataSource = self
-        
         collectionView.snp.makeConstraints { make in
             make.top.equalTo(searchBar.snp.bottom)
-            make.horizontalEdges.bottom.equalTo(self.view.safeAreaLayoutGuide)
+            make.horizontalEdges.equalTo(self.view.safeAreaLayoutGuide)
+            // 키보드 레이아웃 가이드를 사용하여 자동으로 키보드 회피
+            make.bottom.equalTo(self.view.keyboardLayoutGuide.snp.top)
         }
-    }
-}
-
-// MARK: - UICollectionViewDataSource
-extension BookSearchViewController: UICollectionViewDataSource {
-    func numberOfSections(
-        in collectionView: UICollectionView
-    ) -> Int {
-        return BookSearchLayoutFactory.Section.allCases.count
-    }
-
-    func collectionView(
-        _ collectionView: UICollectionView,
-        numberOfItemsInSection section: Int
-    ) -> Int {
-        guard let sectionType = BookSearchLayoutFactory.Section(rawValue: section) else { return 0 }
-
-        switch sectionType {
-        case .recent:
-            return recentBooks.count
-        case .search:
-            // Empty 상태에서도 1개의 cell 표시
-            if searchResults.isEmpty {
-                return 1
-            }
-            return searchResults.count
-        }
-    }
-
-    func collectionView(
-        _ collectionView: UICollectionView,
-        cellForItemAt indexPath: IndexPath
-    ) -> UICollectionViewCell {
-        guard let section = BookSearchLayoutFactory.Section(rawValue: indexPath.section) else {
-            return UICollectionViewCell()
-        }
-
-        switch section {
-        case .recent:
-            let cell: RecentBookCardView = collectionView.dequeueReusableCell(for: indexPath)
-            let book = recentBooks[indexPath.item]
-            cell.configure(with: book.thumbnail)
-            return cell
-
-        case .search:
-            // 검색 결과가 없을 때 EmptyView 표시
-            if searchResults.isEmpty {
-                let cell: EmptyCaseView = collectionView.dequeueReusableCell(for: indexPath)
-                cell.configure(
-                    image: UIImage(systemName: "magnifyingglass"),
-                    message: "검색 결과가 없습니다"
-                )
-                return cell
-            }
-
-            let cell: SearchBookCardView = collectionView.dequeueReusableCell(for: indexPath)
-            let book = searchResults[indexPath.item]
-            cell.configure(with: book)
-            return cell
-        }
-    }
-
-    func collectionView(
-        _ collectionView: UICollectionView,
-        viewForSupplementaryElementOfKind kind: String,
-        at indexPath: IndexPath
-    ) -> UICollectionReusableView {
-        guard kind == UICollectionView.elementKindSectionHeader,
-              let section = BookSearchLayoutFactory.Section(rawValue: indexPath.section) else {
-            return UICollectionReusableView()
-        }
-
-        let header: SectionHeaderView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, for: indexPath)
-        header.configure(title: section.title)
-        
-        return header
     }
 }
 

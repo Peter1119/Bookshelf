@@ -7,24 +7,34 @@
 
 import UIKit
 
-enum BookSearchLayoutFactory {
 
-    enum Section: Int, CaseIterable {
-        case recent
-        case search
+enum BookSearchItem: Hashable, Sendable {
+    case recentBook(Book)
+    case searchBook(Book)
+    case empty
+}
 
-        var title: String {
-            switch self {
-            case .recent: return "최근 본 책"
-            case .search: return "검색 결과"
-            }
+
+enum BookSearchSection: Int, CaseIterable, Hashable, Sendable {
+    case recent
+    case search
+
+    var title: String {
+        switch self {
+        case .recent: return "최근 본 책"
+        case .search: return "검색 결과"
         }
     }
+}
+
+
+enum BookSearchLayoutFactory {
+
 
     // MARK: - Layout 생성
     static func createLayout(shouldShowEmptyView: @escaping () -> Bool) -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { sectionIndex, environment in
-            guard let section = Section(rawValue: sectionIndex) else { return nil }
+            guard let section = BookSearchSection(rawValue: sectionIndex) else { return nil }
 
             switch section {
             case .recent:

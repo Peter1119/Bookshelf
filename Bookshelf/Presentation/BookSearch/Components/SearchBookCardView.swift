@@ -47,6 +47,8 @@ final class SearchBookCardView: UICollectionViewCell {
         stack.axis = .vertical
         stack.spacing = 4
         stack.alignment = .fill  // 가로 가득 채우기
+        stack.isLayoutMarginsRelativeArrangement = true
+        stack.layoutMargins = UIEdgeInsets(top: 4, left: 8, bottom: 0, right: 8)
         return stack
     }()
     
@@ -77,12 +79,7 @@ final class SearchBookCardView: UICollectionViewCell {
         stackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
-        titleLabel.snp.makeConstraints { make in
-            make.horizontalEdges.equalToSuperview().inset(8)
-            make.top.equalToSuperview().inset(4)
-        }
-        
+
         // 셀 배경 설정
         contentView.backgroundColor = .systemBackground
         contentView.layer.cornerRadius = 16

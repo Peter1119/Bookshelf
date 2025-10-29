@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Book {
+public struct Book: Hashable, Sendable {
     public let title: String
     public let authors: [String]
     public let contents: String

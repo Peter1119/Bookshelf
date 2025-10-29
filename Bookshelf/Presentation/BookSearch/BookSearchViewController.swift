@@ -91,7 +91,20 @@ final class BookSearchViewController: UIViewController, View {
         searchBar.rx.text.orEmpty
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
-            .map { Reactor.Action.updateQuery($0) }
+            .map { Reactor.Action.search($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        collectionView.rx.willDisplayCell
+            .withUnretained(self)
+            .filter { owner, event in
+                let (_, indexPath) = event
+                let lastSectionIndex = owner.collectionView.numberOfSections - 1
+                let lastItemIndex = owner.collectionView.numberOfItems(inSection: lastSectionIndex) - 1
+                
+                return indexPath.section == lastSectionIndex && indexPath.item == lastItemIndex
+            }
+            .map { _ in Reactor.Action.loadMoreSearchResults }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 

@@ -15,9 +15,9 @@ public struct BookRepository: BookRepositoryProtocol {
         self.dataSource = dataSource
     }
     
-    public func searchBooks(query: String) -> Observable<[Book]> {
+    public func searchBooks(query: String, page: Int) -> Observable<[Book]> {
         return dataSource
-            .searchBooks(BookSearchRequestDTO(query: query, page: 1))
+            .searchBooks(BookSearchRequestDTO(query: query, page: page))
             .map { $0.map { $0.toDomain() } }
     }
 
@@ -40,7 +40,7 @@ public struct MockBookRepository: BookRepositoryProtocol {
         return .just(())
     }
 
-    public func searchBooks(query: String) -> Observable<[Book]> {
+    public func searchBooks(query: String, page: Int = 1) -> Observable<[Book]> {
         return .just(Book.mockData)
 //        // 검색어가 비어있으면 빈 배열 반환
 //        guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

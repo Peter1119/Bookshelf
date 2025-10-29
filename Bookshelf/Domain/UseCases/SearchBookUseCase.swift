@@ -9,7 +9,7 @@ import Foundation
 import RxSwift
 
 protocol SearchBookUseCaseProtocol {
-    func execute(query: String) -> Observable<[Book]>
+    func execute(query: String, page: Int) -> Observable<[Book]>
 }
 
 struct SearchBookUseCase: SearchBookUseCaseProtocol {
@@ -19,8 +19,8 @@ struct SearchBookUseCase: SearchBookUseCaseProtocol {
         self.reporitory = reporitory
     }
     
-    func execute(query: String) -> Observable<[Book]> {
-        return reporitory.searchBooks(query: query)
+    func execute(query: String, page: Int) -> Observable<[Book]> {
+        return reporitory.searchBooks(query: query, page: page)
     }
 }
 

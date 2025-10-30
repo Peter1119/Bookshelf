@@ -9,82 +9,75 @@ import UIKit
 import SnapKit
 
 final class BookDetailContentsView: UIView {
+    private let stackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 8
+        return stack
+    }()
+
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "📝 책 소개"
         label.font = .systemFont(ofSize: 16, weight: .semibold)
         return label
     }()
-    
+
     private let contentsLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14)
-        label.numberOfLines = 3  // 접혀있을 때
+        label.numberOfLines = 3  // 초기 상태는 3줄만 표시
         return label
     }()
-    
+
     private lazy var moreButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("더보기", for: .normal)
+        button.contentHorizontalAlignment = .trailing
         button.addAction(UIAction(handler: { [weak self] _ in
             self?.toggleExpand()
         }), for: .touchUpInside)
         return button
     }()
-    
+
     private var isExpanded = false
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     private func setupUI() {
-        addSubview(titleLabel)
-        addSubview(contentsLabel)
-        addSubview(moreButton)
+        addSubview(stackView)
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().inset(16)
-            make.horizontalEdges.equalToSuperview().inset(16)
+        // StackView에 순서대로 추가
+        stackView.addArrangedSubview(titleLabel)
+        stackView.addArrangedSubview(contentsLabel)
+        stackView.addArrangedSubview(moreButton)
+
+        stackView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
 
-        contentsLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.horizontalEdges.equalToSuperview().inset(16)
-        }
-
+        // 버튼 오른쪽 정렬
         moreButton.snp.makeConstraints { make in
-            make.top.equalTo(contentsLabel.snp.bottom).offset(8)
-            make.trailing.equalToSuperview().inset(16)
-            make.bottom.equalToSuperview().inset(16)
+            make.horizontalEdges.equalToSuperview()
         }
     }
-    
+
     func configure(with contents: String) {
         contentsLabel.text = contents
     }
-    
+
     private func toggleExpand() {
         isExpanded.toggle()
 
-        UIView.animate(
-            withDuration: 0.3,
-            delay: 0,
-            usingSpringWithDamping: 0.8,
-            initialSpringVelocity: 0.5,
-            options: [.curveEaseInOut]
-        ) {
-            self.contentsLabel.numberOfLines = self.isExpanded ? 0 : 3
-            self.moreButton.setTitle(self.isExpanded ? "접기" : "더보기", for: .normal)
-
-            // 레이아웃 변경을 부모 뷰에 알림
-            self.superview?.layoutIfNeeded()
-        }
+        self.contentsLabel.numberOfLines = self.isExpanded ? 0 : 3
+        self.moreButton.setTitle(self.isExpanded ? "접기" : "더보기", for: .normal)
     }
 }
 

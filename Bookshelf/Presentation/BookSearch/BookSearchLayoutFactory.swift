@@ -7,7 +7,6 @@
 
 import UIKit
 
-
 enum BookSearchItem: Hashable, Sendable {
     case recentBook(Book)
     case searchBook(Book)

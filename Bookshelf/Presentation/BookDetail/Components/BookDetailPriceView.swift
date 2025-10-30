@@ -47,21 +47,36 @@ final class BookDetailPriceView: UIView {
         
         addSubview(stackView)
         stackView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(16)
+            make.edges.equalToSuperview()
         }
     }
     
-    func configure(price: Int, salePrice: Int) {
-        salePriceLabel.text = "\(salePrice.formatted())원"
-        
-        let attributedString = NSAttributedString(
-            string: "\(price.formatted())원",
-            attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
-        )
-        priceLabel.attributedText = attributedString
-        
-        let discount = Int(Double(price - salePrice) / Double(price) * 100)
-        discountLabel.text = "(\(discount)% 할인)"
+    func configure(price: Double, salePrice: Double?) {
+        if let salePrice = salePrice {
+            // 할인가가 있는 경우
+            salePriceLabel.text = "\(Int(salePrice).formatted())원"
+
+            let attributedString = NSAttributedString(
+                string: "\(Int(price).formatted())원",
+                attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
+            )
+            priceLabel.attributedText = attributedString
+
+            let discount = Int((price - salePrice) / price * 100)
+            discountLabel.text = "(\(discount)% 할인)"
+
+            // 모두 표시
+            salePriceLabel.isHidden = false
+            priceLabel.isHidden = false
+            discountLabel.isHidden = false
+        } else {
+            // 할인가가 없는 경우 (정가만 표시)
+            salePriceLabel.text = "\(Int(price).formatted())원"
+
+            // 정가 라벨과 할인 라벨 숨김
+            priceLabel.isHidden = true
+            discountLabel.isHidden = true
+        }
     }
 }
 

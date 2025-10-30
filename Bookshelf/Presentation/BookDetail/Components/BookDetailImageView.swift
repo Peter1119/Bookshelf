@@ -14,11 +14,13 @@ final class BookDetailImageView: UIView {
         imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.backgroundColor = .systemGray6
+        imageView.layer.cornerRadius = 16
         return imageView
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        setupUI()
     }
     
     required init?(coder: NSCoder) {
@@ -28,15 +30,15 @@ final class BookDetailImageView: UIView {
     private func setupUI() {
         addSubview(imageView)
         imageView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-            make.height.equalTo(imageView.snp.width).multipliedBy(1.4)
+            make.centerX.equalToSuperview()  // 중앙 정렬
+            make.top.bottom.equalToSuperview()
+            make.width.equalToSuperview().multipliedBy(0.5)  // 화면 가로의 50%
+            make.height.equalTo(imageView.snp.width).multipliedBy(1.4)  // 3:4 비율 (책 비율)
         }
     }
     
     func configure(with url: URL?) {
-        guard let url else {
-            return
-        }
+        guard let url else { return }
         
         Task {
             guard

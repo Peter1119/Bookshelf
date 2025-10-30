@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import ReactorKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -16,7 +17,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
         window = UIWindow(windowScene: windowScene)
-        let viewController = ViewController()
+        let viewController = BookSearchViewController()
+        viewController.reactor = BookSearchViewReactor(
+            searchBookUseCase: SearchBookUseCase(
+                reporitory: BookRepository(
+                    dataSource: BookDataSource()
+                )
+            ),
+            fetchRecentBooksUseCase: FetchRecentBooksUseCase(
+                repository: MockBookRepository()
+            )
+        )
         let navigationController = UINavigationController(rootViewController: viewController)
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()

@@ -51,7 +51,17 @@ final class BookmarkBookCell: UICollectionViewCell {
         return stack
     }()
 
+    private let checkmarkImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "checkmark.circle.fill")
+        imageView.tintColor = .systemBlue
+        imageView.contentMode = .scaleAspectFit
+        imageView.isHidden = true
+        return imageView
+    }()
+
     private var imageTask: URLSessionDataTask?
+    private var isEditMode = false
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -69,6 +79,7 @@ final class BookmarkBookCell: UICollectionViewCell {
 
         contentView.addSubview(thumbnailImageView)
         contentView.addSubview(infoStackView)
+        contentView.addSubview(checkmarkImageView)
 
         infoStackView.addArrangedSubview(titleLabel)
         infoStackView.addArrangedSubview(authorLabel)
@@ -83,8 +94,14 @@ final class BookmarkBookCell: UICollectionViewCell {
 
         infoStackView.snp.makeConstraints { make in
             make.leading.equalTo(thumbnailImageView.snp.trailing).offset(12)
+            make.trailing.equalTo(checkmarkImageView.snp.leading).offset(-12)
+            make.centerY.equalToSuperview()
+        }
+
+        checkmarkImageView.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-16)
             make.centerY.equalToSuperview()
+            make.width.height.equalTo(24)
         }
     }
 
@@ -100,6 +117,17 @@ final class BookmarkBookCell: UICollectionViewCell {
 
         if let thumbnailURL = book.thumbnail {
             loadImage(from: thumbnailURL)
+        }
+    }
+
+    func setEditMode(_ isEditMode: Bool, isSelected: Bool) {
+        self.isEditMode = isEditMode
+        checkmarkImageView.isHidden = !isEditMode
+
+        if isEditMode {
+            checkmarkImageView.image = isSelected
+                ? UIImage(systemName: "checkmark.circle.fill")
+                : UIImage(systemName: "circle")
         }
     }
 
@@ -130,5 +158,7 @@ final class BookmarkBookCell: UICollectionViewCell {
         titleLabel.text = nil
         authorLabel.text = nil
         publisherLabel.text = nil
+        checkmarkImageView.isHidden = true
+        isEditMode = false
     }
 }

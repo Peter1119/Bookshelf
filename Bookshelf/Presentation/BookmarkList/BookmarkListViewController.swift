@@ -35,7 +35,21 @@ final class BookmarkListViewController: UIViewController, View {
         return label
     }()
 
+    private let emptyView = BookmarkEmptyView()
+
+    private lazy var editButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(
+            title: "편집",
+            style: .plain,
+            target: self,
+            action: #selector(editButtonTapped)
+        )
+        return button
+    }()
+
     private var dataSource: UICollectionViewDiffableDataSource<Section, Book>!
+    private var isEditMode = false
+    private var selectedBooks: Set<Book> = []
 
     enum Section {
         case main
@@ -65,6 +79,14 @@ final class BookmarkListViewController: UIViewController, View {
                 guard let self = self, self.dataSource != nil else { return }
                 self.updateSnapshot(with: books)
                 self.updateCountLabel(count: books.count)
+
+                // 편집 모드에서 모든 책이 삭제되면 편집 모드 해제
+                if self.isEditMode && books.isEmpty {
+                    self.isEditMode = false
+                    self.selectedBooks.removeAll()
+                    self.editButton.title = "편집"
+                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: self.countLabel)
+                }
             })
             .disposed(by: disposeBag)
 
@@ -82,28 +104,101 @@ final class BookmarkListViewController: UIViewController, View {
         title = "담은 책"
         view.backgroundColor = .systemBackground
 
-        // 네비게이션 바 오른쪽에 총 권수 라벨 추가
+        // 네비게이션 바 버튼 설정
+        editButton.isEnabled = false // 초기 상태는 비활성화
+        navigationItem.leftBarButtonItem = editButton
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: countLabel)
 
         view.addSubview(collectionView)
+        view.addSubview(emptyView)
 
         collectionView.register(BookmarkBookCell.self)
+        collectionView.allowsMultipleSelection = true
 
         collectionView.snp.makeConstraints { make in
+            make.edges.equalTo(view.safeAreaLayoutGuide)
+        }
+
+        emptyView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
         }
     }
 
     private func updateCountLabel(count: Int) {
         countLabel.text = "총 \(count)권"
+        editButton.isEnabled = count > 0
+        emptyView.isHidden = count > 0
+    }
+
+    @objc private func editButtonTapped() {
+        isEditMode.toggle()
+        selectedBooks.removeAll()
+
+        if isEditMode {
+            editButton.title = "완료"
+            // 삭제 버튼 추가
+            let deleteButton = UIBarButtonItem(
+                title: "삭제",
+                style: .plain,
+                target: self,
+                action: #selector(deleteButtonTapped)
+            )
+            deleteButton.tintColor = .systemRed
+            navigationItem.rightBarButtonItems = [deleteButton]
+        } else {
+            editButton.title = "편집"
+            navigationItem.rightBarButtonItem = UIBarButtonItem(customView: countLabel)
+        }
+
+        // 모든 셀의 선택 상태 초기화
+        collectionView.indexPathsForSelectedItems?.forEach {
+            collectionView.deselectItem(at: $0, animated: true)
+        }
+
+        // DiffableDataSource 사용 시 snapshot을 다시 apply
+        var snapshot = dataSource.snapshot()
+        snapshot.reloadSections(snapshot.sectionIdentifiers)
+        dataSource.apply(snapshot, animatingDifferences: false)
+    }
+
+    @objc private func deleteButtonTapped() {
+        guard !selectedBooks.isEmpty else { return }
+
+        let alert = UIAlertController(
+            title: "삭제 확인",
+            message: "\(selectedBooks.count)권의 책을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.deleteSelectedBooks()
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func deleteSelectedBooks() {
+        selectedBooks.forEach { book in
+            reactor?.action.onNext(.deleteBookmark(book))
+        }
+        selectedBooks.removeAll()
+
+        // 편집 모드 해제는 bind에서 books.isEmpty일 때 자동으로 처리됨
     }
 
     private func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource(
             collectionView: collectionView,
-            cellProvider: { collectionView, indexPath, book in
+            cellProvider: { [weak self] collectionView, indexPath, book in
                 let cell: BookmarkBookCell = collectionView.dequeueReusableCell(for: indexPath)
                 cell.configure(with: book)
+
+                // 편집 모드일 때 체크마크 표시
+                let isEditMode = self?.isEditMode ?? false
+                let isSelected = self?.selectedBooks.contains(book) ?? false
+                cell.setEditMode(isEditMode, isSelected: isSelected)
+
                 return cell
             }
         )
@@ -111,19 +206,24 @@ final class BookmarkListViewController: UIViewController, View {
 
     private func updateSnapshot(with books: [Book]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Book>()
+
         snapshot.appendSections([.main])
         snapshot.appendItems(books, toSection: .main)
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
     private func presentBookDetail(book: Book) {
-        let repository = CoreDataBookmarkRepository()
+        let bookmarkRepository = CoreDataBookmarkRepository()
+        let recentBookRepository = CoreDataRecentBookRepository()
+
         let detailVC = BookDetailViewController()
         detailVC.reactor = BookDetailViewReactor(
             book: book,
-            addBookmarkUseCase: AddBookmarkUseCase(repository: repository),
-            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository),
-            checkBookmarkUseCase: CheckBookmarkUseCase(repository: repository)
+            addBookmarkUseCase: AddBookmarkUseCase(repository: bookmarkRepository),
+            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: bookmarkRepository),
+            checkBookmarkUseCase: CheckBookmarkUseCase(repository: bookmarkRepository),
+            saveRecentBookUseCase: SaveRecentBookUseCase(repository: recentBookRepository)
         )
 
         let navController = UINavigationController(rootViewController: detailVC)
@@ -143,9 +243,23 @@ extension BookmarkListViewController: UICollectionViewDelegateFlowLayout {
     }
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let book = dataSource.itemIdentifier(for: indexPath),
-              let reactor = reactor else { return }
-        reactor.action.onNext(.selectBook(book))
+        guard let book = dataSource.itemIdentifier(for: indexPath) else { return }
+
+        if isEditMode {
+            // 편집 모드: 선택/해제
+            if selectedBooks.contains(book) {
+                selectedBooks.remove(book)
+            } else {
+                selectedBooks.insert(book)
+            }
+
+            var snapshot = dataSource.snapshot()
+            snapshot.reconfigureItems([book])
+            dataSource.apply(snapshot, animatingDifferences: false)
+        } else {
+            // 일반 모드: 상세 화면으로 이동
+            reactor?.action.onNext(.selectBook(book))
+        }
     }
 }
 
@@ -153,7 +267,8 @@ private func makeViewController() -> UIViewController {
     let viewController = BookmarkListViewController()
     let repository = CoreDataBookmarkRepository()
     viewController.reactor = BookmarkListViewReactor(
-        fetchBookmarksUseCase: FetchBookmarksUseCase(repository: repository)
+        fetchBookmarksUseCase: FetchBookmarksUseCase(repository: repository),
+        removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository)
     )
     return UINavigationController(rootViewController: viewController)
 }

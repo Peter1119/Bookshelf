@@ -13,6 +13,7 @@ final class BookmarkListViewReactor: Reactor {
     enum Action {
         case loadBookmarks
         case selectBook(Book)
+        case deleteBookmark(Book)
     }
 
     // MARK: - Mutation
@@ -32,9 +33,14 @@ final class BookmarkListViewReactor: Reactor {
     // MARK: - Properties
     let initialState = State()
     private let fetchBookmarksUseCase: FetchBookmarksUseCaseProtocol
+    private let removeBookmarkUseCase: RemoveBookmarkUseCaseProtocol
 
-    init(fetchBookmarksUseCase: FetchBookmarksUseCaseProtocol) {
+    init(
+        fetchBookmarksUseCase: FetchBookmarksUseCaseProtocol,
+        removeBookmarkUseCase: RemoveBookmarkUseCaseProtocol
+    ) {
         self.fetchBookmarksUseCase = fetchBookmarksUseCase
+        self.removeBookmarkUseCase = removeBookmarkUseCase
     }
 
     // MARK: - Mutate
@@ -52,6 +58,19 @@ final class BookmarkListViewReactor: Reactor {
 
         case .selectBook(let book):
             return .just(Mutation.presentDetail(book))
+
+        case .deleteBookmark(let book):
+            return removeBookmarkUseCase.execute(book)
+                .flatMap { _ in
+                    self.fetchBookmarksUseCase.execute()
+                        .flatMap { books in
+                            Observable.from([
+                                Mutation.setBookmarks(books),
+                                Mutation.setLoading(false)
+                            ])
+                        }
+                }
+                .startWith(Mutation.setLoading(true))
         }
     }
 

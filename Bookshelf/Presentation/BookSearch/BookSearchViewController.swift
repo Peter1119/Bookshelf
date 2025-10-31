@@ -43,6 +43,12 @@ final class BookSearchViewController: UIViewController, View {
         setupCollectionView()
         configureDataSource()
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 화면이 나타날 때마다 최근 본 책 새로고침
+        reactor?.action.onNext(.loadRecentBooks)
+    }
     
     private func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource(
@@ -110,7 +116,7 @@ final class BookSearchViewController: UIViewController, View {
 
         // Output: State의 recentBooks 변화 감지
         reactor.state.map(\.recentBooks)
-            .distinctUntilChanged { $0.count == $1.count }
+            .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.recentBooks = books
@@ -120,7 +126,7 @@ final class BookSearchViewController: UIViewController, View {
 
         // Output: State의 searchResults 변화 감지
         reactor.state.map(\.searchResults)
-            .distinctUntilChanged { $0.count == $1.count }
+            .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.searchResults = books
@@ -132,12 +138,17 @@ final class BookSearchViewController: UIViewController, View {
     private func updateSnapshot() {
         Task {
             var snapshot = NSDiffableDataSourceSnapshot<BookSearchSection, BookSearchItem>()
-            
-            snapshot.appendSections([.recent, .search])
-            
-            let recentItems = recentBooks.map { BookSearchItem.recentBook($0) }
-            snapshot.appendItems(recentItems, toSection: .recent)
-            
+
+            // 최근 본 책이 있을 때만 recent 섹션 추가
+            if !recentBooks.isEmpty {
+                snapshot.appendSections([.recent])
+                let recentItems = recentBooks.map { BookSearchItem.recentBook($0) }
+                snapshot.appendItems(recentItems, toSection: .recent)
+            }
+
+            // search 섹션은 항상 추가
+            snapshot.appendSections([.search])
+
             if searchResults.isEmpty {
                 snapshot.appendItems([.empty], toSection: .search)
             } else {
@@ -151,6 +162,7 @@ final class BookSearchViewController: UIViewController, View {
     private func setupUI() {
         self.view.backgroundColor = .systemBackground
         self.view.addSubview(searchBar)
+        self.navigationItem.title = "책 검색"
 
         searchBar.snp.makeConstraints { make in
             make.top.left.right.equalTo(self.view.safeAreaLayoutGuide)
@@ -197,16 +209,20 @@ final class BookSearchViewController: UIViewController, View {
     }
 
     private func presentBookDetail(book: Book) {
-        let repository = CoreDataBookmarkRepository()
+        let bookmarkRepository = CoreDataBookmarkRepository()
+        let recentBookRepository = CoreDataRecentBookRepository()
+
         let detailVC = BookDetailViewController()
         detailVC.reactor = BookDetailViewReactor(
             book: book,
-            addBookmarkUseCase: AddBookmarkUseCase(repository: repository),
-            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository),
-            checkBookmarkUseCase: CheckBookmarkUseCase(repository: repository)
+            addBookmarkUseCase: AddBookmarkUseCase(repository: bookmarkRepository),
+            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: bookmarkRepository),
+            checkBookmarkUseCase: CheckBookmarkUseCase(repository: bookmarkRepository),
+            saveRecentBookUseCase: SaveRecentBookUseCase(repository: recentBookRepository)
         )
 
         let navController = UINavigationController(rootViewController: detailVC)
+        navController.modalPresentationStyle = .fullScreen
         present(navController, animated: true)
     }
 }

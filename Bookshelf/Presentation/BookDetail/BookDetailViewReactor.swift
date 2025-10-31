@@ -35,18 +35,26 @@ final class BookDetailViewReactor: Reactor {
     private let addBookmarkUseCase: AddBookmarkUseCaseProtocol
     private let removeBookmarkUseCase: RemoveBookmarkUseCaseProtocol
     private let checkBookmarkUseCase: CheckBookmarkUseCaseProtocol
+    private let saveRecentBookUseCase: SaveRecentBookUseCaseProtocol
 
     init(
         book: Book,
         addBookmarkUseCase: AddBookmarkUseCaseProtocol,
         removeBookmarkUseCase: RemoveBookmarkUseCaseProtocol,
-        checkBookmarkUseCase: CheckBookmarkUseCaseProtocol
+        checkBookmarkUseCase: CheckBookmarkUseCaseProtocol,
+        saveRecentBookUseCase: SaveRecentBookUseCaseProtocol
     ) {
         self.book = book
         self.initialState = State(book: book)
         self.addBookmarkUseCase = addBookmarkUseCase
         self.removeBookmarkUseCase = removeBookmarkUseCase
         self.checkBookmarkUseCase = checkBookmarkUseCase
+        self.saveRecentBookUseCase = saveRecentBookUseCase
+
+        // Reactor 생성 시 최근 본 책으로 자동 저장
+        saveRecentBookUseCase.execute(book)
+            .subscribe()
+            .dispose()
     }
 
     // MARK: - Mutate (Action을 Mutation으로 변환)

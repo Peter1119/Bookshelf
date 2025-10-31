@@ -15,13 +15,15 @@ final class MainTabBarController: UITabBarController {
     }
 
     private func setupViewControllers() {
-        let repository = CoreDataBookmarkRepository()
+        let bookmarkRepository = CoreDataBookmarkRepository()
         let bookRepository = BookRepository(dataSource: BookDataSource())
+        let recentBookRepository = CoreDataRecentBookRepository()
+
         // 1. 책 검색 탭
         let searchVC = BookSearchViewController()
         searchVC.reactor = BookSearchViewReactor(
             searchBookUseCase: SearchBookUseCase(reporitory: bookRepository),
-            fetchRecentBooksUseCase: FetchRecentBooksUseCase(repository: bookRepository)
+            fetchRecentBooksUseCase: FetchRecentBooksUseCase(repository: recentBookRepository)
         )
         let searchNav = UINavigationController(rootViewController: searchVC)
         searchNav.tabBarItem = UITabBarItem(
@@ -33,7 +35,8 @@ final class MainTabBarController: UITabBarController {
         // 2. 담은 책 탭
         let bookmarkVC = BookmarkListViewController()
         bookmarkVC.reactor = BookmarkListViewReactor(
-            fetchBookmarksUseCase: FetchBookmarksUseCase(repository: repository)
+            fetchBookmarksUseCase: FetchBookmarksUseCase(repository: bookmarkRepository),
+            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: bookmarkRepository)
         )
         let bookmarkNav = UINavigationController(rootViewController: bookmarkVC)
         bookmarkNav.tabBarItem = UITabBarItem(

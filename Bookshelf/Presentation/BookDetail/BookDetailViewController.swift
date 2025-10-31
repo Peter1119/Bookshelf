@@ -178,12 +178,14 @@ private func makeViewController() -> UIViewController {
     )
 
     let viewController = BookDetailViewController()
-    let repository = CoreDataBookmarkRepository()
+    let bookmarkRepository = CoreDataBookmarkRepository()
+    let recentBookRepository = CoreDataRecentBookRepository()
     viewController.reactor = BookDetailViewReactor(
         book: book,
-        addBookmarkUseCase: AddBookmarkUseCase(repository: repository),
-        removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository),
-        checkBookmarkUseCase: CheckBookmarkUseCase(repository: repository)
+        addBookmarkUseCase: AddBookmarkUseCase(repository: bookmarkRepository),
+        removeBookmarkUseCase: RemoveBookmarkUseCase(repository: bookmarkRepository),
+        checkBookmarkUseCase: CheckBookmarkUseCase(repository: bookmarkRepository),
+        saveRecentBookUseCase: SaveRecentBookUseCase(repository: recentBookRepository)
     )
 
     let navigationController = UINavigationController(rootViewController: viewController)

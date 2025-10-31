@@ -7,8 +7,11 @@
 
 import UIKit
 import SnapKit
+import ReactorKit
+import RxCocoa
 
-final class BookDetailViewController: UIViewController {
+final class BookDetailViewController: UIViewController, View {
+    var disposeBag: DisposeBag = DisposeBag()
     // MARK: - UI Components
     private let scrollView: UIScrollView = {
         let scroll = UIScrollView()
@@ -29,12 +32,28 @@ final class BookDetailViewController: UIViewController {
     private let contentsView = BookDetailContentsView()
     private let infoView = BookDetailInfoView()
 
-    // MARK: - Properties
-    private let book: Book
+    private lazy var bookmarkButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(
+            title: "담기",
+            style: .plain,
+            target: nil,
+            action: nil
+        )
+        return button
+    }()
+
+    private lazy var closeButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(
+            image: UIImage(systemName: "xmark"),
+            primaryAction: UIAction(handler: { [weak self] _ in
+                self?.closeTapped()
+            })
+        )
+        return button
+    }()
 
     // MARK: - Initialization
-    init(book: Book) {
-        self.book = book
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -46,19 +65,59 @@ final class BookDetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        configure()
+    }
+
+    // MARK: - Reactor Binding
+    func bind(reactor: BookDetailViewReactor) {
+        // Input: 북마크 상태 확인 (뷰가 로드되면 바로 확인)
+        Observable.just(Reactor.Action.checkBookmarkStatus)
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+
+        // Input: 북마크 버튼 탭
+        bookmarkButton.rx.tap
+            .map { Reactor.Action.toggleBookmark }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+
+        // Output: Book 정보로 UI 구성
+        reactor.state.map(\.book)
+            .take(1)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] book in
+                self?.configure(with: book)
+            })
+            .disposed(by: disposeBag)
+
+        // Output: 북마크 상태에 따른 버튼 UI 변경
+        reactor.state.map(\.isBookmarked)
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isBookmarked in
+                self?.updateBookmarkButton(isBookmarked: isBookmarked)
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func updateBookmarkButton(isBookmarked: Bool) {
+        bookmarkButton.title = isBookmarked ? "담기 취소" : "담기"
     }
 
     // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
+        // 네비게이션 바 설정
+        navigationItem.leftBarButtonItem = closeButton
+        navigationItem.rightBarButtonItem = bookmarkButton
+        navigationItem.title = "책 정보"
+
         view.addSubview(scrollView)
         scrollView.addSubview(contentStackView)
 
         contentStackView.isLayoutMarginsRelativeArrangement = true
         contentStackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        
+
         // 컴포넌트들을 스택뷰에 추가
         [imageView, titleView, priceView, contentsView, infoView]
             .forEach {
@@ -76,7 +135,7 @@ final class BookDetailViewController: UIViewController {
         }
     }
 
-    private func configure() {
+    private func configure(with book: Book) {
         imageView.configure(with: book.thumbnail)
         titleView.configure(title: book.title, author: book.authors.first ?? "")
         priceView.configure(price: book.price, salePrice: book.salePrice)
@@ -98,6 +157,10 @@ final class BookDetailViewController: UIViewController {
 
         return displayFormatter.string(from: date)
     }
+
+    private func closeTapped() {
+        dismiss(animated: true)
+    }
 }
 
 
@@ -114,7 +177,17 @@ private func makeViewController() -> UIViewController {
         status: "정상판매"
     )
 
-    return BookDetailViewController(book: book)
+    let viewController = BookDetailViewController()
+    let repository = CoreDataBookmarkRepository()
+    viewController.reactor = BookDetailViewReactor(
+        book: book,
+        addBookmarkUseCase: AddBookmarkUseCase(repository: repository),
+        removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository),
+        checkBookmarkUseCase: CheckBookmarkUseCase(repository: repository)
+    )
+
+    let navigationController = UINavigationController(rootViewController: viewController)
+    return navigationController
 }
 
 @available(iOS 17.0, *)

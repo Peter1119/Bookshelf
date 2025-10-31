@@ -173,12 +173,41 @@ final class BookSearchViewController: UIViewController, View {
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader
         )
 
+        // Cell 선택 처리
+        collectionView.rx.itemSelected
+            .subscribe(onNext: { [weak self] indexPath in
+                guard let self = self else { return }
+                let item = self.dataSource.itemIdentifier(for: indexPath)
+
+                switch item {
+                case .recentBook(let book), .searchBook(let book):
+                    self.presentBookDetail(book: book)
+                case .empty, .none:
+                    break
+                }
+            })
+            .disposed(by: disposeBag)
+
         collectionView.snp.makeConstraints { make in
             make.top.equalTo(searchBar.snp.bottom)
             make.horizontalEdges.equalTo(self.view.safeAreaLayoutGuide)
             // 키보드 레이아웃 가이드를 사용하여 자동으로 키보드 회피
             make.bottom.equalTo(self.view.keyboardLayoutGuide.snp.top)
         }
+    }
+
+    private func presentBookDetail(book: Book) {
+        let repository = CoreDataBookmarkRepository()
+        let detailVC = BookDetailViewController()
+        detailVC.reactor = BookDetailViewReactor(
+            book: book,
+            addBookmarkUseCase: AddBookmarkUseCase(repository: repository),
+            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: repository),
+            checkBookmarkUseCase: CheckBookmarkUseCase(repository: repository)
+        )
+
+        let navController = UINavigationController(rootViewController: detailVC)
+        present(navController, animated: true)
     }
 }
 

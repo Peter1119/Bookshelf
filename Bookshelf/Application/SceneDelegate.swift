@@ -17,19 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
 
         window = UIWindow(windowScene: windowScene)
-        let viewController = BookSearchViewController()
-        viewController.reactor = BookSearchViewReactor(
-            searchBookUseCase: SearchBookUseCase(
-                reporitory: BookRepository(
-                    dataSource: BookDataSource()
-                )
-            ),
-            fetchRecentBooksUseCase: FetchRecentBooksUseCase(
-                repository: MockBookRepository()
-            )
-        )
-        let navigationController = UINavigationController(rootViewController: viewController)
-        window?.rootViewController = navigationController
+        let tabBarController = MainTabBarController()
+        window?.rootViewController = tabBarController
         window?.makeKeyAndVisible()
     }
 }

@@ -13,9 +13,9 @@ protocol SaveRecentBookUseCaseProtocol {
 }
 
 struct SaveRecentBookUseCase: SaveRecentBookUseCaseProtocol {
-    private let repository: BookRepositoryProtocol
+    private let repository: RecentBookRepositoryProtocol
 
-    init(repository: BookRepositoryProtocol) {
+    init(repository: RecentBookRepositoryProtocol) {
         self.repository = repository
     }
 

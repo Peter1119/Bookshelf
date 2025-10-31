@@ -9,7 +9,7 @@ import CoreData
 import Foundation
 import RxSwift
 
-final class CoreDataRecentBookRepository: BookRepositoryProtocol {
+final class CoreDataRecentBookRepository: RecentBookRepositoryProtocol {
     private let coreDataStack: CoreDataStack
     private let maxRecentBooks = 10
 
@@ -81,9 +81,14 @@ final class CoreDataRecentBookRepository: BookRepositoryProtocol {
             return Disposables.create()
         }
     }
+}
 
-    // BookRepositoryProtocol 필수 메서드 (사용하지 않음)
-    func searchBooks(query: String, page: Int) -> Observable<BookSearchResult> {
-        return .empty()
+public struct MockRecentBookRepository: RecentBookRepositoryProtocol {
+    func fetchRecentBooks() -> Observable<[Book]> {
+        return .just(Book.mockData)
+    }
+    
+    func saveRecentBook(_ book: Book) -> Observable<Void> {
+        return .just(())
     }
 }

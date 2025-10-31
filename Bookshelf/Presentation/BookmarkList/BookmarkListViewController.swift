@@ -60,8 +60,8 @@ final class BookmarkListViewController: UIViewController, View {
         // Output: 북마크 목록 업데이트
         reactor.state.map(\.bookmarks)
             .distinctUntilChanged { $0.count == $1.count }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] books in
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] books in
                 guard let self = self, self.dataSource != nil else { return }
                 self.updateSnapshot(with: books)
                 self.updateCountLabel(count: books.count)
@@ -87,7 +87,7 @@ final class BookmarkListViewController: UIViewController, View {
 
         view.addSubview(collectionView)
 
-        collectionView.register(BookmarkBookCell.self, forCellWithReuseIdentifier: "BookmarkCell")
+        collectionView.register(BookmarkBookCell.self)
 
         collectionView.snp.makeConstraints { make in
             make.edges.equalTo(view.safeAreaLayoutGuide)
@@ -102,10 +102,7 @@ final class BookmarkListViewController: UIViewController, View {
         dataSource = UICollectionViewDiffableDataSource(
             collectionView: collectionView,
             cellProvider: { collectionView, indexPath, book in
-                let cell = collectionView.dequeueReusableCell(
-                    withReuseIdentifier: "BookmarkCell",
-                    for: indexPath
-                ) as! BookmarkBookCell
+                let cell: BookmarkBookCell = collectionView.dequeueReusableCell(for: indexPath)
                 cell.configure(with: book)
                 return cell
             }

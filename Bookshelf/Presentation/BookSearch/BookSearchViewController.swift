@@ -219,7 +219,7 @@ private func makeViewController() -> UIViewController {
     viewController.reactor = BookSearchViewReactor(
         searchBookUseCase: SearchBookUseCase(reporitory: MockBookRepository()),
         fetchRecentBooksUseCase: FetchRecentBooksUseCase(
-            repository: MockBookRepository()
+            repository: MockRecentBookRepository()
         )
     )
     return viewController

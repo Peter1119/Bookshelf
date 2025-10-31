@@ -13,9 +13,9 @@ protocol FetchRecentBooksUseCaseProtocol {
 }
 
 final class FetchRecentBooksUseCase: FetchRecentBooksUseCaseProtocol {
-    private let repository: BookRepositoryProtocol
+    private let repository: RecentBookRepositoryProtocol
 
-    init(repository: BookRepositoryProtocol) {
+    init(repository: RecentBookRepositoryProtocol) {
         self.repository = repository
     }
 

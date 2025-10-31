@@ -17,7 +17,10 @@ final class BookSearchCoordinator: Coordinator {
     private let recentBookRepository = CoreDataRecentBookRepository()
     private let bookRepository: BookRepositoryProtocol
 
-    init(navigationController: UINavigationController, bookRepository: BookRepositoryProtocol? = nil) {
+    init(
+        navigationController: UINavigationController,
+        bookRepository: BookRepositoryProtocol? = nil
+    ) {
         self.navigationController = navigationController
         self.bookRepository = bookRepository ?? BookRepository(dataSource: BookDataSource())
     }

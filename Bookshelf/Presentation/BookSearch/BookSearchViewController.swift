@@ -13,6 +13,7 @@ import SnapKit
 @MainActor
 final class BookSearchViewController: UIViewController, View {
     var disposeBag: DisposeBag = DisposeBag()
+    weak var coordinator: BookSearchCoordinator?
 
     private var dataSource: UICollectionViewDiffableDataSource<BookSearchSection, BookSearchItem>!
     private let searchBar: UISearchBar = {
@@ -209,21 +210,7 @@ final class BookSearchViewController: UIViewController, View {
     }
 
     private func presentBookDetail(book: Book) {
-        let bookmarkRepository = CoreDataBookmarkRepository()
-        let recentBookRepository = CoreDataRecentBookRepository()
-
-        let detailVC = BookDetailViewController()
-        detailVC.reactor = BookDetailViewReactor(
-            book: book,
-            addBookmarkUseCase: AddBookmarkUseCase(repository: bookmarkRepository),
-            removeBookmarkUseCase: RemoveBookmarkUseCase(repository: bookmarkRepository),
-            checkBookmarkUseCase: CheckBookmarkUseCase(repository: bookmarkRepository),
-            saveRecentBookUseCase: SaveRecentBookUseCase(repository: recentBookRepository)
-        )
-
-        let navController = UINavigationController(rootViewController: detailVC)
-        navController.modalPresentationStyle = .fullScreen
-        present(navController, animated: true)
+        coordinator?.showBookDetail(book: book)
     }
 }
 

@@ -16,6 +16,29 @@ public struct Book: Hashable, Sendable {
     public let price: Double
     public let salePrice: Double?
     public let thumbnail: URL?
+    public let status: String
+
+    public init(
+        title: String,
+        authors: [String],
+        contents: String,
+        publishedDate: Date,
+        publisher: String,
+        price: Double,
+        salePrice: Double?,
+        thumbnail: URL?,
+        status: String = "정상판매"
+    ) {
+        self.title = title
+        self.authors = authors
+        self.contents = contents
+        self.publishedDate = publishedDate
+        self.publisher = publisher
+        self.price = price
+        self.salePrice = salePrice
+        self.thumbnail = thumbnail
+        self.status = status
+    }
 }
 
 // MARK: - Mock Data

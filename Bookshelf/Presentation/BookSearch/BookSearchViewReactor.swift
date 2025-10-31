@@ -70,7 +70,7 @@ final class BookSearchViewReactor: Reactor {
             return searchBookUseCase.execute(query: query, page: 1)
                 .flatMap { bookResult in
                     Observable.from([
-                        Mutation.appendSearchResults(bookResult.books),
+                        Mutation.setSearchResults(bookResult.books),
                         Mutation.setCurrentPage(1),
                         Mutation.setHasMore(!bookResult.isEnd),
                         Mutation.setLoading(false)
